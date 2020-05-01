@@ -29,7 +29,7 @@ void recInit(ind &offspring, ind &father, ind &mother, double Rg, double Rc, dou
     // CIS REG:
     if (Rc!=0.5)  //do this unless you have the Rc=0.5 mode, which enforces free recombination of cis regulators
    {
-       locus = 0; //
+       locus = 0;
        for (j = 0; j < nbCo; j++)
        {
            strand = ((j+ChrInit)%2)*nS;
@@ -115,7 +115,7 @@ void recInit(ind &offspring, ind &father, ind &mother, double Rg, double Rc, dou
 
     // CIS REGULATORS in FREE REC MODE
 
-    if (Rc == 0.5)
+    if (Rc==0.5)
     {
         for (i = 0; i < nS; i++)
         {
@@ -129,31 +129,25 @@ void recInit(ind &offspring, ind &father, ind &mother, double Rg, double Rc, dou
         }
     }
 
+
     // TRANS REGULATORS
 
-    for (i = 0; i < nS; i++)
-    {
-        // paternally inherited trans male modifiers:
-        ChrInit = rnd.randInt(1);
-        offspring.transm[i] = father.transm[ChrInit*nS+i];
+    // paternally inherited trans male modifier:
+    ChrInit = rnd.randInt(1);
+    offspring.transm[0] = father.transm[ChrInit];
 
-        // maternally inherited trans modifiers:
-        ChrInit = rnd.randInt(1);
-        offspring.transm[i+nS] = mother.transm[ChrInit*nS+i];
-    }
+    // maternally inherited trans modifier:
+    ChrInit = rnd.randInt(1);
+    offspring.transm[1] = mother.transm[ChrInit];
 
-    for (i = 0; i < nS; i++)
-    {
-        // paternally inherited trans female modifiers:
-        ChrInit = rnd.randInt(1);
-        offspring.transf[i] = father.transf[ChrInit*nS+i];
+    // paternally inherited trans female modifiers:
+    ChrInit = rnd.randInt(1);
+    offspring.transf[0] = father.transf[ChrInit];
 
-        // maternally inherited trans modifiers:
-        ChrInit = rnd.randInt(1);
-        offspring.transf[i+nS] = mother.transf[ChrInit*nS+i];
-    }
+    // maternally inherited trans modifiers:
+    ChrInit = rnd.randInt(1);
+    offspring.transf[1] = mother.transf[ChrInit];
 }
-
 
 
 
@@ -191,23 +185,24 @@ void rec(ind &offspring, ind &father, ind &mother, double Rg, double Rc, double 
     // CIS REG:
     if (Rc!=0.5)
     {
-        locus = 0;
-        for (j = 0; j < nbCo; j++)
+    locus = 0;
+    for (j = 0; j < nbCo; j++)
+    {
+        strand = ((j+ChrInit)%2)*nS;
+        while ((locus < nS) && ((locus * Rg) < posCoG[j])) // while locus is on the left of cross-over j; note that cis regulator i is at position Rg*i
         {
-            strand = ((j+ChrInit)%2)*nS;
-            while ((locus < nS) && ((locus * Rg) < posCoG[j])) // while locus is on the left of cross-over j; note that cis regulator i is at position Rg*i
-            {
-                offspring.cis[nS+locus] = mother.cis[strand + locus]; // copy from chrInit if nb of Co is even; copy from other chromosome otherwise; note that (j+chrInit)%2 equals 0 when chrInit = 0 and j is even or chrInit = 1 and j is odd
-                locus++;
-            }
-        }
-        strand = ((nbCo+ChrInit)%2)*nS;
-        while (locus < nS) // cis regulators on the right of the last crossover; if total number of crossovers is even, all positions are taken from chrInit
-        {
-            offspring.cis[nS+locus] = mother.cis[strand + locus];
+            offspring.cis[nS+locus] = mother.cis[strand + locus]; // copy from chrInit if nb of Co is even; copy from other chromosome otherwise; note that (j+chrInit)%2 equals 0 when chrInit = 0 and j is even or chrInit = 1 and j is odd
             locus++;
         }
     }
+    strand = ((nbCo+ChrInit)%2)*nS;
+    while (locus < nS) // cis regulators on the right of the last crossover; if total number of crossovers is even, all positions are taken from chrInit
+    {
+        offspring.cis[nS+locus] = mother.cis[strand + locus];
+        locus++;
+    }
+    }
+
 
     // GENES:
     locus = 0;
@@ -227,37 +222,33 @@ void rec(ind &offspring, ind &father, ind &mother, double Rg, double Rc, double 
         locus++;
     }
 
-    // CIS REGULATORS
+        // CIS REGULATORS
     if (Rc==0.5)
     {
-        for (i = 0; i < nS; i++)
-        {
-            // maternally inherited cis regulators:
-            ChrInit = rnd.randInt(1);
-            offspring.cis[i+nS] = mother.cis[ChrInit*nS+i];
-        }
+    for (i = 0; i < nS; i++)
+    {
+        // maternally inherited cis regulators:
+        ChrInit = rnd.randInt(1);
+        offspring.cis[i+nS] = mother.cis[ChrInit*nS+i];
     }
+    }
+
 
     // TRANS REGULATORS
 
-    for (i = 0; i < nS; i++)
-    {
-        // paternally inherited trans male modifiers:
-        ChrInit = rnd.randInt(1);
-        offspring.transm[i] = father.transm[ChrInit*nS+i];
+    // paternally inherited trans male modifier:
+    ChrInit = rnd.randInt(1);
+    offspring.transm[0] = father.transm[ChrInit];
 
-        // maternally inherited trans male modifiers:
-        ChrInit = rnd.randInt(1);
-        offspring.transm[i+nS] = mother.transm[ChrInit*nS+i];
-    }
-    for (i = 0; i < nS; i++)
-    {
-        // paternally inherited trans female modifiers:
-        ChrInit = rnd.randInt(1);
-        offspring.transf[i] = father.transf[ChrInit*nS+i];
+    // maternally inherited trans modifier:
+    ChrInit = rnd.randInt(1);
+    offspring.transm[1] = mother.transm[ChrInit];
 
-        // maternally inherited trans female modifiers:
-        ChrInit = rnd.randInt(1);
-        offspring.transf[i+nS] = mother.transf[ChrInit*nS+i];
-    }
+    // paternally inherited trans female modifiers:
+    ChrInit = rnd.randInt(1);
+    offspring.transf[0] = father.transf[ChrInit];
+
+    // maternally inherited trans modifiers:
+    ChrInit = rnd.randInt(1);
+    offspring.transf[1] = mother.transf[ChrInit];
 }

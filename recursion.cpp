@@ -39,7 +39,7 @@ output: 0 if all loci recorded
 
 void recursion(int Nv, double sigtrans, double sigcis, int nbSv, int NbGenv, int NbPrelimv, int pasv, double s, double s_max, double I, double U_g, double U_c, double U_tm, double U_tf, double Rg, double Rc, int Rep, int output, double** allAverages)
 {
-    // variables:
+    //variables:
     
 	int i, j, k, nm, gen, mut, p1, p2, indiv, site, chrom, off_sex, Nmales_1, Nfemales_1, NjuvM, NjuvF;
 	double w, wmmax, wfmax, h, dg, dc, dt, varm, moyc;
@@ -53,8 +53,8 @@ void recursion(int Nv, double sigtrans, double sigcis, int nbSv, int NbGenv, int
     double MLength = Rg * (nbSv - 1) + Rc;
     double UgTot = 2*Nv*U_g*nbSv;
     double UcTot = 2*Nv*U_c*nbSv;
-    double UtmTot = 2*Nv*U_tm*nbSv;
-    double UtfTot = 2*Nv*U_tf*nbSv;
+    double UtmTot = 2*Nv*U_tm;
+    double UtfTot = 2*Nv*U_tf;
     double expdom = -log(h0) / log(2.0);
 
     // creates result file (with parameter values in file name):
@@ -67,33 +67,33 @@ void recursion(int Nv, double sigtrans, double sigcis, int nbSv, int NbGenv, int
     fout.open(fileName);
 
 	// population of N individuals:
-	ind * pop = new ind [Nv];
-	ind * temp = new ind [Nv]; // temp for saving current generation during offspring production
-    ind * pc;
+	ind * pop = new ind [Nv]; // "pop" chr pointer refers to a chr type (see "mutation.h") with Nv dimensions; "chr" has "gene", "cis", "trans", "sex" array
+	ind * temp = new ind [Nv]; // temp for saving current generation during recombination
+    ind * pc; // for recombination
 
     // array for measures from population: for each locus: sbarX, sbarY, hY, hXinact, attractXmale, attractXAct, attractXInact, attractY, dosY, dosXmale, dosXAct, dosXInact
 
     double ** measures;
     double * popAverages;
     
-    // will hold measures for each locus: sbarX, sbarY, hY, attractX, cisx, cisy, transmale, transfemale (see record.cpp):
+    // will hold measures for each locus: sbarX, sbarY, hY, attractX, cisx, cisy (see record.cpp):
     
     measures = new double *[nbSv];
     for(i = 0; i < nbSv; i++)
-        measures[i] = new double[8];
+        measures[i] = new double[6];
     
     // will hold averages over the whole population: Wbarmale, WbarFemale,
     // averages over loci of sbarX, sbarY, hY, attractX, cisx, cisy, transmale, transfemale,
     // number of loci half-dead, dead, half-silenced, silenced on Y (see record.cpp):
     
     if (output == 0)
-        popAverages = new double [2];  // only Wbarmale, WbarFemale
+        popAverages = new double [4]; // only Wbarmale, WbarFemale, transmbar, transfbar
     else
         popAverages = new double [14];
 
 	// fitnesses:
 
-	double * Wtot = new double [Nv];
+	double * Wtot = new double [Nv]; // creates a new double pointer "Wtot" with dimension Nv -- each individual has a fitness!
 
 	// for time length measure:
 
@@ -114,12 +114,12 @@ void recursion(int Nv, double sigtrans, double sigcis, int nbSv, int NbGenv, int
         temp[i].cis = new double [2*nbSv];
 
         // TRANS regulators Effect in Male
-        pop[i].transm = new double [2*nbSv]; // two chromosomes, trans reg's  corresponding to each gene
-        temp[i].transm = new double [2*nbSv];
+        pop[i].transm = new double [2]; // two alleles
+        temp[i].transm = new double [2];
 
         // TRANS regulators Effect in female
-        pop[i].transf = new double [2*nbSv]; // two chromosomes, trans reg's  corresponding to each gene
-        temp[i].transf = new double [2*nbSv];
+        pop[i].transf = new double [2]; // two alleles
+        temp[i].transf = new double [2];
 
 
         for (k = 0; k < nbSv; k++)
@@ -128,12 +128,13 @@ void recursion(int Nv, double sigtrans, double sigcis, int nbSv, int NbGenv, int
             pop[i].gene[nbSv+k] = 1.0; // same for Chromosome #2
             pop[i].cis[k] = 1; // initialize all cis regulators
             pop[i].cis[nbSv+k] = 1; // same for Chromosome #2
-            pop[i].transm[k] = 1; // initialize all trans male-effect regulators
-            pop[i].transm[nbSv+k] = 1; // same for Chromosome #2
-            pop[i].transf[k] = 1; // initialize all trans female-effect regulators
-            pop[i].transf[nbSv+k] = 1; // same for Chromosome #2
          }
-
+        
+        // initialize  trans regulators:
+        pop[i].transm[0] = 1;
+        pop[i].transm[1] = 1;
+        pop[i].transf[0] = 1;
+        pop[i].transf[1] = 1;
     }
 
   	// generations:
@@ -151,7 +152,7 @@ void recursion(int Nv, double sigtrans, double sigcis, int nbSv, int NbGenv, int
 
             // draw mutational effect on fitness from exp distribution
             dg = s * (-log(rnd.rand())); // Draw from exp dist of mean s, lambda = 1/s
-
+//
             // For a set s_max limit
             if (pop[indiv].gene[site] * (1 - dg) >= 1-s_max)
                 pop[indiv].gene[site] *= (1 - dg);
@@ -176,7 +177,7 @@ void recursion(int Nv, double sigtrans, double sigcis, int nbSv, int NbGenv, int
         for (nm = 0; nm < mut; nm++)
         {
             indiv = rnd.randInt(N_1);
-            site = rnd.randInt(twonbSm1);
+            site = rnd.randInt(1);
 
             // draw mutational effect on fitness from Gaussian distribution
             dc = sigtrans * gasdev();
@@ -188,15 +189,15 @@ void recursion(int Nv, double sigtrans, double sigcis, int nbSv, int NbGenv, int
         for (nm = 0; nm < mut; nm++)
         {
             indiv = rnd.randInt(N_1);
-            site = rnd.randInt(twonbSm1);
+            site = rnd.randInt(1);
 
             // draw mutational effect on fitness from Gaussian distribution
             dc = sigtrans * gasdev();
             pop[indiv].transf[site] += dc;
         }
-        
-        // fitnesses:
 
+        // fitnesses:
+        
         wmmax = 0;
         for (i = 0; i < Nmales; i++) // Loops through each male in the population
         {
@@ -220,37 +221,38 @@ void recursion(int Nv, double sigtrans, double sigcis, int nbSv, int NbGenv, int
         NjuvM = 0;
         NjuvF = 0;
 
-
         // scaling cis and trans effects at the end of burnin generations
 
-        if (gen == NbPrelimv)
-        {
-            record_output(pop, Wtot, measures, popAverages, nbSv, Nmales, Nv, expdom);
+       if (gen == NbPrelimv)
+       {
+           record_output(pop, Wtot, measures, popAverages, nbSv, Nmales, Nv, expdom);
 
-            for (i = 0; i < Nv; i++)
-                for (k = 0; k < nbSv; k++)
-                {
-                    moyc = ((2.0*(Nv-Nmales)+Nmales)*measures[k][4] + Nmales*measures[k][5]) / (2.0*Nv);
-                    pop[i].cis[k] = pop[i].cis[k] / moyc;
-                    pop[i].cis[nbSv + k] = pop[i].cis[nbSv + k] / moyc;
-                    pop[i].transm[k] = pop[i].transm[k] / measures[k][6];
-                    pop[i].transm[nbSv + k] = pop[i].transm[nbSv + k] / measures[k][6];
-                    pop[i].transf[k] = pop[i].transf[k] / measures[k][7];
-                    pop[i].transf[nbSv + k] = pop[i].transf[nbSv + k] / measures[k][7];
-                }
-        }
+          for (i = 0; i < Nv; i++)
+		  {
+              pop[i].transm[0] = pop[i].transm[0] / popAverages[2];
+              pop[i].transm[1] = pop[i].transm[1] / popAverages[2];
+              pop[i].transf[0] = pop[i].transf[0] / popAverages[3];
+              pop[i].transf[1] = pop[i].transf[1] / popAverages[3];
+              for (k = 0; k < nbSv; k++)
+              {
+                   moyc = ((2.0*(Nv-Nmales)+Nmales)*measures[k][4] + Nmales*measures[k][5]) / (2.0*Nv);
+                   pop[i].cis[k] = pop[i].cis[k] / moyc;
+                   pop[i].cis[nbSv + k] = pop[i].cis[nbSv + k] / moyc;
+              }
+		  }    
+       }
 
         // measures phenotypic moments and writes in result file every "pasv" generations:
-        
         if (gen % pasv == 0) // "gen" is the generational index (iterable) and once it reaches a multiple of the time interval per generation "pasv", write results
         {
-            if (output == 0)  // records quantities for each locus individually (and writes in result file)
+            if (output == 0) // records quantities for each locus individually (and writes in result file)
             {
                 record_output(pop, Wtot, measures, popAverages, nbSv, Nmales, Nv, expdom);
 
-                fout << gen << " " << popAverages[0] << " " << popAverages[1] << " " ;
+                fout << gen << " " << popAverages[0] << " " << popAverages[1] << " "
+                     << " " << popAverages[2] << " " << popAverages[3] << " " ;
                 for (j = 0; j < nbSv; j++)
-                    for (i = 0; i < 7; i++)
+                    for (i = 0; i < 6; i++)
                         fout << measures[j][i] << " ";
                 fout << endl;
             }
@@ -273,12 +275,12 @@ void recursion(int Nv, double sigtrans, double sigcis, int nbSv, int NbGenv, int
 		for (j = 0; j < Nv; j++)
 		{
             do{
-				p1 = rnd.randInt(Nmales_1); // selects the father
+				p1 = rnd.randInt(Nmales_1); // selects a father
 
 			} while (rnd.rand() > (Wtot[p1] / wmmax));
             
-            do{
-                p2 = rnd.randInt(Nfemales_1); // selects the mother
+			do{
+                p2 = rnd.randInt(Nfemales_1); // selects a mother
 
             } while (rnd.rand() > (Wtot[Nmales + p2] / wfmax));
 
@@ -328,7 +330,7 @@ void recursion(int Nv, double sigtrans, double sigcis, int nbSv, int NbGenv, int
         Nmales = NjuvM;
 	}
 
-    fin = time(0); // NOT IMPORTANT (C function for getting the calendar time to write to the results file)
+    fin = time(0); // NOT IMPORTANT (C function for getting the calendar time to write to the results file
 
     // writes in output file:
 

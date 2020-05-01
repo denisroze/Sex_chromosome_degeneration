@@ -12,19 +12,23 @@ void record_output(ind * pop, double * Wtot, double ** measures, double * popAve
     int twoNfemale = 2*(Nv - Nmales);
 
     for (j = 0; j < nbSv; j++)
-        for (i = 0; i < 8; i++)
+        for (i = 0; i < 6; i++)
             measures[j][i] = 0;
+    
+    popAve[2] = 0; popAve[3] = 0;
 
     WbarMales = 0;
     for (i = 0; i < Nmales; i++)
     {
         WbarMales += Wtot[i];
-
+        
+        transmale = (((pop[i].transm[0] > 0) ? pop[i].transm[0] : 0)+((pop[i].transm[1] > 0) ? pop[i].transm[1] : 0))/2.0;
+        transfemale = (((pop[i].transf[0] > 0) ? pop[i].transf[0] : 0)+((pop[i].transf[1] > 0) ? pop[i].transf[1] : 0))/2.0;
+        popAve[2] += transmale;
+        popAve[3] += transfemale;
 
         for (j = 0; j < nbSv; j++)
         {
-            transmale = (((pop[i].transm[j] > 0) ? pop[i].transm[j] : 0)+((pop[i].transm[nbSv+j] > 0) ? pop[i].transm[nbSv+j] : 0))/2.0;
-            transfemale = (((pop[i].transf[j] > 0) ? pop[i].transf[j] : 0)+((pop[i].transf[nbSv+j] > 0) ? pop[i].transf[nbSv+j] : 0))/2.0;
             c1 = ((pop[i].cis[j] > 0) ? pop[i].cis[j] : 0);
             c2 = ((pop[i].cis[nbSv+j] > 0) ? pop[i].cis[nbSv+j] : 0);
 
@@ -34,9 +38,6 @@ void record_output(ind * pop, double * Wtot, double ** measures, double * popAve
             measures[j][2] += pow(y, expdom);
             measures[j][4] += c2;
             measures[j][5] += c1;
-            measures[j][6] += transmale;
-            measures[j][7] += transfemale;
-
         }
     }
     WbarMales /= Nmales;
@@ -46,22 +47,20 @@ void record_output(ind * pop, double * Wtot, double ** measures, double * popAve
     {
         WbarFemales += Wtot[i];
 
-
+        transmale = (((pop[i].transm[0] > 0) ? pop[i].transm[0] : 0)+((pop[i].transm[1] > 0) ? pop[i].transm[1] : 0))/2.0;
+        transfemale = (((pop[i].transf[0] > 0) ? pop[i].transf[0] : 0)+((pop[i].transf[1] > 0) ? pop[i].transf[1] : 0))/2.0;
+        popAve[2] += transmale;
+        popAve[3] += transfemale;
+        
         for (j = 0; j < nbSv; j++)
         {
-            transmale = (((pop[i].transm[j] > 0) ? pop[i].transm[j] : 0)+((pop[i].transm[nbSv+j] > 0) ? pop[i].transm[nbSv+j] : 0))/2.0;
-            transfemale = (((pop[i].transf[j] > 0) ? pop[i].transf[j] : 0)+((pop[i].transf[nbSv+j] > 0) ? pop[i].transf[nbSv+j] : 0))/2.0;
             c1 = ((pop[i].cis[j] > 0) ? pop[i].cis[j] : 0);
             c2 = ((pop[i].cis[nbSv+j] > 0) ? pop[i].cis[nbSv+j] : 0);
 
             measures[j][0] += 2 - pop[i].gene[j] - pop[i].gene[nbSv+j];
             measures[j][3] += (c1 + c2) * transfemale;
             measures[j][4] += (c1 + c2) ;
-            measures[j][6] += transmale;
-            measures[j][7] += transfemale;
-
         }
-
     }
     for (j = 0; j < nbSv; j++)
     {
@@ -71,15 +70,13 @@ void record_output(ind * pop, double * Wtot, double ** measures, double * popAve
         measures[j][3] /= twoNfemale; // attractX
         measures[j][4] /= (Nmales + twoNfemale); // cisX
         measures[j][5] /= Nmales; // cisY
-        measures[j][6] /= (Nmales+Nfemales); // transmale
-        measures[j][7] /= (Nmales+Nfemales); // transfemale
-
     }
     WbarFemales /= Nfemales;
 
     popAve[0] = WbarMales;
     popAve[1] = WbarFemales;
-
+    popAve[2] /= Nv; // transbarm
+    popAve[3] /= Nv; // transbarf
 }
 
 void record_averages(ind * pop, double * Wtot, double * popAve, int nbSv, int Nmales, int Nv, double expdom, double smax)
@@ -94,7 +91,6 @@ void record_averages(ind * pop, double * Wtot, double * popAve, int nbSv, int Nm
     double minW = 1-smax;
     int cmptyM = 0;
 
-
     for (i = 0; i < 14; i++)
         popAve[i] = 0;
 
@@ -102,12 +98,14 @@ void record_averages(ind * pop, double * Wtot, double * popAve, int nbSv, int Nm
     for (i = 0; i < Nmales; i++)
     {
         WbarMales += Wtot[i];
-
+        
+        transmale = (((pop[i].transm[0] > 0) ? pop[i].transm[0] : 0)+((pop[i].transm[1] > 0) ? pop[i].transm[1] : 0))/2.0;
+        transfemale = (((pop[i].transf[0] > 0) ? pop[i].transf[0] : 0)+((pop[i].transf[1] > 0) ? pop[i].transf[1] : 0))/2.0;
+        popAve[8] += transmale;  //transm
+        popAve[9] += transfemale;  //transf
 
         for (j = 0; j < nbSv; j++)
         {
-            transmale = (((pop[i].transm[j] > 0) ? pop[i].transm[j] : 0)+((pop[i].transm[nbSv+j] > 0) ? pop[i].transm[nbSv+j] : 0))/2.0;
-            transfemale = (((pop[i].transf[j] > 0) ? pop[i].transf[j] : 0)+((pop[i].transf[nbSv+j] > 0) ? pop[i].transf[nbSv+j] : 0))/2.0;
             c1 = ((pop[i].cis[j] > 0) ? pop[i].cis[j] : 0);
             c2 = ((pop[i].cis[nbSv+j] > 0) ? pop[i].cis[nbSv+j] : 0);
 
@@ -121,8 +119,7 @@ void record_averages(ind * pop, double * Wtot, double * popAve, int nbSv, int Nm
             }
             popAve[6] += c2;  //cisxbar
             popAve[7] += c1;  //cisybar
-            popAve[8] += transmale;  //transm
-            popAve[9] += transfemale;  //transm
+            
             if (pop[i].gene[j] < halfminW)
                 popAve[10] += 1;
             if (pop[i].gene[j] == minW)
@@ -139,21 +136,20 @@ void record_averages(ind * pop, double * Wtot, double * popAve, int nbSv, int Nm
     for (i = Nmales; i < Nv; i++)
     {
         WbarFemales += Wtot[i];
-
+        
+        transmale = (((pop[i].transm[0] > 0) ? pop[i].transm[0] : 0)+((pop[i].transm[1] > 0) ? pop[i].transm[1] : 0))/2.0;
+        transfemale = (((pop[i].transf[0] > 0) ? pop[i].transf[0] : 0)+((pop[i].transf[1] > 0) ? pop[i].transf[1] : 0))/2.0;
+        popAve[8] += transmale;  //transm
+        popAve[9] += transfemale;  //transf
 
         for (j = 0; j < nbSv; j++)
         {
-            transmale = (((pop[i].transm[j] > 0) ? pop[i].transm[j] : 0)+((pop[i].transm[nbSv+j] > 0) ? pop[i].transm[nbSv+j] : 0))/2.0;
-            transfemale = (((pop[i].transf[j] > 0) ? pop[i].transf[j] : 0)+((pop[i].transf[nbSv+j] > 0) ? pop[i].transf[nbSv+j] : 0))/2.0;
             c1 = ((pop[i].cis[j] > 0) ? pop[i].cis[j] : 0);
             c2 = ((pop[i].cis[nbSv+j] > 0) ? pop[i].cis[nbSv+j] : 0);
 
             popAve[2] += 2 - pop[i].gene[j] - pop[i].gene[nbSv+j];
             popAve[5] +=  (c1 + c2) * transfemale ;
             popAve[6] +=  (c1 + c2)  ;
-            popAve[8] += transmale;  //transm
-            popAve[9] += transfemale;  //transm
-
         }
 
     }
@@ -167,8 +163,8 @@ void record_averages(ind * pop, double * Wtot, double * popAve, int nbSv, int Nm
     popAve[5] /= (nbSv * twoNfemale); //attractXbar
     popAve[6] /= (nbSv *(Nmales + twoNfemale)); //cisxbar
     popAve[7] /= (nbSv *Nmales); // cisybar
-    popAve[8] /= (nbSv * Nv); // transbarmale
-    popAve[9] /= (nbSv * Nv); // transbarfemale
+    popAve[8] /= Nv; // transbarmale
+    popAve[9] /= Nv; // transbarfemale
     popAve[10] /= (nbSv * Nmales);
     popAve[11] /= (nbSv * Nmales);
     popAve[12] /= (nbSv * Nmales);
