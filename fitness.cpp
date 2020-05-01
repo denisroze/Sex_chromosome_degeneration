@@ -23,13 +23,17 @@ double Wmale(ind &parent, double expdom, double smax, double Qopt, double I, int
         e2 = ((parent.cis[allele2] > 0) ? parent.cis[allele2] : 0) ;  // cis_x
 
         explv = (e1 + e2) * transmale; //  expression level
-        if (explv == 0)
+        if ((explv == 0) or (explv > 4)) // new condition with symmetrical function
             w *= 1 - smax;  // fitness decreased by 1-smax if no expression of gene
         else
         {
             // stabilizing selection on expression level:
             
-            explvscaled= log(explv/Qopt);
+            if (explv < 2)
+                explvscaled= log(0.5*explv);
+            else
+                explvscaled= log(2-0.5*explv) ;
+
             effectLocus = 1-smax*(1-exp(-I*explvscaled*explvscaled));
 
             if (parent.gene[allele2] >= parent.gene[allele1]) // if second allele fittest
@@ -79,13 +83,17 @@ double Wfemale(ind &parent, double expdom, double smax, double Qopt, double I, i
         e2 = ((parent.cis[allele2] > 0) ? parent.cis[allele2] : 0);
         explv = (e1 + e2) * transfemale ; // expression level
 
-        if (explv == 0)
+        if ((explv == 0) or (explv > 4))
             w *= 1 - smax;
 
         else
         {
             // stabilizing selection on expression level:
-            explvscaled= log(explv/Qopt);
+            if (explv < 2)
+               explvscaled= log(0.5*explv);
+            else
+               explvscaled= log(2-0.5*explv) ;
+
             effectLocus = 1-smax*(1-exp(-I*explvscaled*explvscaled));
 
             if (parent.gene[allele2] >= parent.gene[allele1]) // if second allele fittest
